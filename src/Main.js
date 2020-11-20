@@ -10,12 +10,19 @@ export default class Main extends Component {
                 
                 <div>
                     <label>Your url: </label>
-                    <input type="url"></input>
+                    <input type="long-url"></input>
                 </div>
 
                 <div>
-                    <label>Short url: </label>
-                    <h5>PlaceHolder</h5>
+                    <label>Your abbreviation: </label>
+                    <input type="short-url"></input>
+                </div>
+
+                <div>
+                    <button>Generate</button>
+                    <button>Edit</button>
+                    <button>Search</button>
+                    <button>Delete</button>
                 </div>
             </div>
         );
