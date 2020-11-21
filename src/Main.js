@@ -54,26 +54,26 @@ export default class Main extends Component {
         )   
     }
 
-    onSearch() {
-        Axios.get(
-            'http://localhost:3000/api/url'+this.state.long_url
+    // onSearch() {
+    //     Axios.get(
+    //         'http://localhost:3000/api/url'+this.state.long_url
             
-        ).then(function() {
-            return Axios.get('http://localhost:3000/api/url'+this.state.long_url)
+    //     ).then(function() {
+    //         return Axios.get('http://localhost:3000/api/url'+this.state.long_url)
 
-        })
-        .then(response => {
-            this.setState({url: response.data})
-        })
-        .catch(error => console.log(error))
-        .finally(() => this.setState(
-            {
-                long_url: '',
-                short_url: '',
-            }    
-            )
-        )   
-    }
+    //     })
+    //     .then(response => {
+    //         this.setState({url: response.data})
+    //     })
+    //     .catch(error => console.log(error))
+    //     .finally(() => this.setState(
+    //         {
+    //             long_url: '',
+    //             short_url: '',
+    //         }    
+    //         )
+    //     )   
+    // }
     render() {
         return (
             <div>
