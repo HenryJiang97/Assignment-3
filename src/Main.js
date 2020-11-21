@@ -24,13 +24,15 @@ export default class Main extends Component {
     }
 
     onGetButtonClick() {
-        document.getElementById("url").value = "";
+        document.getElementById("long_url").value = "";
+        document.getElementById("short_url").value = "";
         this.getUrl();
     }
 
     getUrl() {
         const that = this;
         const long_url = this.state.long_url;
+        let short_url = this.state.short_url;
 
         Axios.get(`http://localhost:3000/api/url/${long_url}`)
             .then(function(response) {
@@ -38,18 +40,26 @@ export default class Main extends Component {
 
                 if (response.data !== "") {    // Found url in the db
                     alert("Url exist in the database");
-                    that.setState({
-                        long_url: response.data.long_url,
-                        short_url: response.data.short_url
-                    });
+
+                    document.getElementById("long_url_label").innerText = "Long URL: " + response.data.long_url;
+                    document.getElementById("short_url_label").innerText = "Short URL: " + response.data.short_url;
+
                 } else {    // Not found url in the db
                     alert("No short version for this url, created one.");
-                    let short_url = uuidv4();
+                    if (short_url === "") {
+                        short_url = uuidv4();
+                    }
                     that.postUrl(long_url, short_url);
                 }
             })
             .catch(function(error) {
                 console.log(error);
+            })
+            .then(function() {
+                that.setState({
+                    long_url: "",
+                    short_url: ""
+                });
             });
     }
 
@@ -63,14 +73,18 @@ export default class Main extends Component {
         .then(function(response) {
             console.log(response.data);
 
-            that.setState({
-                long_url: response.data[0].long_url,
-                short_url: response.data[0].short_url
-            });
+            document.getElementById("long_url_label").innerText = "Long URL: " + response.data[0].long_url;
+            document.getElementById("short_url_label").innerText = "Short URL: " + response.data[0].short_url;
         })
         .catch(function(error) {
             console.log(error);
         })
+        .then(function() {
+            that.setState({
+                long_url: "",
+                short_url: ""
+            });
+        });
     }
 
     render() {
@@ -80,22 +94,22 @@ export default class Main extends Component {
                 
                 <div>
                     <label>URL: </label>
-                    <input type="url" id="url" onChange={this.onLongUrlInputChange}></input>
+                    <input type="url" id="long_url" onChange={this.onLongUrlInputChange}></input>
                 </div>
 
-                {/* <div>
-                    <label>Short url: </label>
-                    <input type="url" onChange={this.onShortUrlInputChange}></input>
-                </div> */}
+                <div>
+                    <label>Customized Suffix (Leave blank for random): </label>
+                    <input type="url" id="short_url" onChange={this.onShortUrlInputChange}></input>
+                </div>
 
                 <div>
-                    <button onClick={this.onGetButtonClick}>GET</button>
+                    <button onClick={this.onGetButtonClick}>PROCESS</button>
                 </div>
 
                 <div>
                     <h3>Result</h3>
-                    <h4>Long URL: {this.state.long_url}</h4>
-                    <h4>Short URL: {this.state.short_url}</h4>
+                    <h4 id="long_url_label"> </h4>
+                    <h4 id="short_url_label"> </h4>
                 </div>
 
             </div>
