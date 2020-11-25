@@ -123,7 +123,9 @@ export default class Main extends Component {
         this.onLongUrlInputChange = this.onLongUrlInputChange.bind(this);
         this.onShortUrlInputChange = this.onShortUrlInputChange.bind(this);
         this.onGetButtonClick = this.onGetButtonClick.bind(this);
+        this.onEditButtonClick = this.onEditButtonClick.bind(this);
         this.getUrl = this.getUrl.bind(this);
+        this.editUrl = this.editUrl.bind(this);
     }
 
     onLongUrlInputChange(evt) {
@@ -140,17 +142,27 @@ export default class Main extends Component {
         this.getUrl();
     }
 
+    onEditButtonClick() {
+        document.getElementById("long_url").value = "";
+        document.getElementById("short_url").value = "";
+
+        this.editUrl();
+    }
+
     getUrl() {
         const curState = this;
         const long_url = this.state.long_url;
         var short_url_input = this.state.short_url;
+        if (short_url_input === "") {
+            short_url_input = uuidv4();
+        }
 
-        Axios.get(`http://localhost:3000/api/url/${long_url}`)
+        Axios.get(`http://localhost:3000/api/url/long/${long_url}`)
             .then(function(response) {
                 console.log(response.data);
 
-                if (response.data !== "") {    // Found url in the db
-                    alert("Url exist in the database");
+                if (response.data !== "") {    // Found long url in the db
+                    alert("Long Url exist in the database");
 
                     document.getElementById("long_url_label").innerText = "Long URL: " + response.data.long_url;
                     document.getElementById("short_url_label").innerText = "Short URL: " + response.data.short_url;
@@ -160,20 +172,77 @@ export default class Main extends Component {
                         short_url: ""
                     });
 
-                } else {    // Not found url in the db
-                    alert("No short version for this url, created one.");
-                    if (short_url_input === "") {
-                        short_url_input = uuidv4();
-                    }
-                    console.log("the input short_url is");
-                    console.log(short_url_input);
-                    curState.postUrl(long_url, short_url_input);
+                } else {    
+                    // Not found long url in the db
+                    //search for short url in db
+                    Axios.get(`http://localhost:3000/api/url/${short_url_input}`)
+                    .then(function(response) {
+                        console.log(response.data);
+
+                        if (response.data !== "") {    
+                            // Found short url in the db
+                            alert("short Url exist in the database");
+
+                            document.getElementById("long_url_label").innerText = "Long URL: " + response.data.long_url;
+                            document.getElementById("short_url_label").innerText = "Short URL: " + response.data.short_url;
+
+                            curState.setState({
+                                long_url: "",
+                                short_url: ""
+                            });
+
+                        }else{
+                            alert("No short version for this url, created one.");
+                            
+                            console.log("the input short_url is");
+                            console.log(short_url_input);
+                            curState.postUrl(long_url, short_url_input);
+                        }
+                    })
+                    
                 }
             })
             .catch(function(error) {
                 console.log(error);
             });
             
+    }
+    editUrl() {
+        const curState = this;
+        const long_url = this.state.long_url;
+        var short_url_input = this.state.short_url;
+
+        this.editLongUrl(curState, long_url, short_url_input);
+
+    }
+
+    editLongUrl(curState, long_url, short_url_input) {
+        Axios.put(`http://localhost:3000/api/url/${short_url_input}?long_url=${long_url}`)
+        .then(function(response) {
+            console.log(response.data);
+
+            if (response.data !== "") {    
+                // Found short url in the db
+                // update long url in the db
+
+                document.getElementById("long_url_label").innerText = "Long URL: " + response.data.long_url;
+                document.getElementById("short_url_label").innerText = "Short URL: " + response.data.short_url;
+
+                curState.setState({
+                    long_url: "",
+                    short_url: ""
+                });
+
+            }else{
+                alert("No able to edit short url, created one");
+                if (short_url_input === "") {
+                    short_url_input = uuidv4();
+                }
+                console.log("the input short_url is");
+                console.log(short_url_input);
+                curState.postUrl(long_url, short_url_input);
+            }
+        })
     }
 
     postUrl(long_url, short_url) {
@@ -219,6 +288,7 @@ export default class Main extends Component {
 
                 <div>
                     <button onClick={this.onGetButtonClick}>PROCESS</button>
+                    <button onClick={this.onEditButtonClick}>Edit</button>
                 </div>
 
                 <div>
