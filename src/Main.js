@@ -113,6 +113,8 @@ import React, {Component} from 'react';
 import Axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 
+var urlencode = require('urlencode');
+
 export default class Main extends Component {
     constructor(props) {
         super(props);
@@ -129,7 +131,9 @@ export default class Main extends Component {
     }
 
     onLongUrlInputChange(evt) {
+        console.log(evt.target.value);
         this.setState({long_url: evt.target.value});
+        
     }
 
     onShortUrlInputChange(evt) {
@@ -151,7 +155,9 @@ export default class Main extends Component {
 
     getUrl() {
         const curState = this;
-        const long_url = this.state.long_url;
+        const long_url = urlencode(this.state.long_url, 'gbk');
+        console.log("long url");
+        console.log(long_url);
         var short_url_input = this.state.short_url;
         if (short_url_input === "") {
             short_url_input = uuidv4();
@@ -160,11 +166,11 @@ export default class Main extends Component {
         Axios.get(`http://localhost:3000/api/url/long/${long_url}`)
             .then(function(response) {
                 console.log(response.data);
-
+                
                 if (response.data !== "") {    // Found long url in the db
                     alert("Long Url exist in the database");
 
-                    document.getElementById("long_url_label").innerText = "Long URL: " + response.data.long_url;
+                    document.getElementById("long_url_label").innerText = "Long URL: " + urlencode.decode(response.data.long_url, 'gbk');
                     document.getElementById("short_url_label").innerText = "Short URL: " + response.data.short_url;
 
                     this.setState({
@@ -183,7 +189,7 @@ export default class Main extends Component {
                             // Found short url in the db
                             alert("short Url exist in the database");
 
-                            document.getElementById("long_url_label").innerText = "Long URL: " + response.data.long_url;
+                            document.getElementById("long_url_label").innerText = "Long URL: " + urlencode.decode(response.data.long_url, 'gbk');
                             document.getElementById("short_url_label").innerText = "Short URL: " + response.data.short_url;
 
                             curState.setState({
@@ -209,7 +215,7 @@ export default class Main extends Component {
     }
     editUrl() {
         const curState = this;
-        const long_url = this.state.long_url;
+        const long_url = urlencode(this.state.long_url, 'gbk');
         var short_url_input = this.state.short_url;
 
         this.editLongUrl(curState, long_url, short_url_input);
@@ -225,7 +231,7 @@ export default class Main extends Component {
                 // Found short url in the db
                 // update long url in the db
 
-                document.getElementById("long_url_label").innerText = "Long URL: " + response.data.long_url;
+                document.getElementById("long_url_label").innerText = "Long URL: " + urlencode.decode(response.data.long_url, 'gbk');
                 document.getElementById("short_url_label").innerText = "Short URL: " + response.data.short_url;
 
                 curState.setState({
@@ -254,10 +260,9 @@ export default class Main extends Component {
             short_url: short_url,
         })
         .then(function(response) {
-            console.log("188");
             console.log(response.data.long_url);
             console.log(response.data.short_url);
-            document.getElementById("long_url_label").innerText = "Long URL: " + response.data.long_url;
+            document.getElementById("long_url_label").innerText = "Long URL: " + urlencode.decode(response.data.long_url, 'gbk');
             document.getElementById("short_url_label").innerText = "Short URL: " + response.data.short_url;
         })
         .catch(function(error) {
