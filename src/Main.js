@@ -112,6 +112,7 @@
 import React, {Component} from 'react';
 import Axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
+// import {Redirect, Route} from 'react-router-dom';
 
 var urlencode = require('urlencode');
 
@@ -119,6 +120,7 @@ export default class Main extends Component {
     constructor(props) {
         super(props);
         this.state = {
+            toDashboard: false,
             long_url: "",
             short_url: "",
         };
@@ -147,8 +149,8 @@ export default class Main extends Component {
     }
 
     onEditButtonClick() {
-        document.getElementById("long_url").value = "";
-        document.getElementById("short_url").value = "";
+        // document.getElementById("long_url").value = "";
+        // document.getElementById("short_url").value = "";
 
         this.editUrl();
     }
@@ -174,8 +176,10 @@ export default class Main extends Component {
                     document.getElementById("short_url_label").innerText = "Short URL: " + response.data.short_url;
 
                     this.setState({
-                        long_url: "",
-                        short_url: ""
+                        long_url: urlencode.decode(response.data.long_url, 'gbk'),
+                        short_url: response.data.short_url,
+                        toDashboard: true,
+                        
                     });
 
                 } else {    
@@ -193,9 +197,11 @@ export default class Main extends Component {
                             document.getElementById("short_url_label").innerText = "Short URL: " + response.data.short_url;
 
                             curState.setState({
-                                long_url: "",
-                                short_url: ""
+                                long_url: urlencode.decode(response.data.long_url, 'gbk'),
+                                short_url: "",
+                                toDashboard: true,
                             });
+                            
 
                         }else{
                             alert("No short version for this url, created one.");
@@ -215,9 +221,13 @@ export default class Main extends Component {
     }
     editUrl() {
         const curState = this;
+        console.log("cur state");
+        console.log(curState);
         const long_url = urlencode(this.state.long_url, 'gbk');
         var short_url_input = this.state.short_url;
-
+        console.log("from edit url");
+        console.log(long_url);
+        console.log(short_url_input);
         this.editLongUrl(curState, long_url, short_url_input);
 
     }
@@ -229,14 +239,15 @@ export default class Main extends Component {
 
             if (response.data !== "") {    
                 // Found short url in the db
-                // update long url in the db
+                // update long url in the db successfully
 
-                document.getElementById("long_url_label").innerText = "Long URL: " + urlencode.decode(response.data.long_url, 'gbk');
-                document.getElementById("short_url_label").innerText = "Short URL: " + response.data.short_url;
+                // document.getElementById("long_url_label").innerText = "Long URL: " + urlencode.decode(response.data.long_url, 'gbk');
+                // document.getElementById("short_url_label").innerText = "Short URL: " + response.data.short_url;
 
                 curState.setState({
-                    long_url: "",
-                    short_url: ""
+                    long_url: long_url,
+                    short_url: "",
+                    toDashboard: true,
                 });
 
             }else{
@@ -255,6 +266,7 @@ export default class Main extends Component {
         const curState = this;
         console.log("input short url is: ");
         console.log(short_url);
+        let redirecturl = "";
         Axios.post('http://localhost:3000/api/url/', {
             long_url: long_url,
             short_url: short_url,
@@ -262,6 +274,8 @@ export default class Main extends Component {
         .then(function(response) {
             console.log(response.data.long_url);
             console.log(response.data.short_url);
+            redirecturl = urlencode.decode(response.data.long_url, 'gbk');
+            console.log(redirecturl);
             document.getElementById("long_url_label").innerText = "Long URL: " + urlencode.decode(response.data.long_url, 'gbk');
             document.getElementById("short_url_label").innerText = "Short URL: " + response.data.short_url;
         })
@@ -270,13 +284,31 @@ export default class Main extends Component {
         })
         .then(function() {
             curState.setState({
-                long_url: "",
-                short_url: ""
+                long_url: redirecturl,
+                short_url: short_url,
+                toDashboard: true,
             });
+            console.log("reset long url to decoded one");
+            console.log(long_url);
+            console.log(short_url);
         });
     }
 
     render() {
+        if(this.state.toDashboard){
+            const url = urlencode.decode(this.state.long_url, 'gbk');
+            const short_url = this.state.short_url;
+            console.log(url);
+            return (
+                <div>
+                    <a href={url}><strong>The long url you want to compress: </strong>{url}</a>
+                    <div><strong>The abbreviation: </strong>{short_url}</div>
+                    <input type="url" id="long_url" onChange={this.onLongUrlInputChange}></input>
+                    <button onClick={this.onEditButtonClick}>Edit</button>
+                </div>
+            );
+        }
+
         return (
             <div>
                 <h1>URL Shortener</h1>
@@ -293,7 +325,6 @@ export default class Main extends Component {
 
                 <div>
                     <button onClick={this.onGetButtonClick}>PROCESS</button>
-                    <button onClick={this.onEditButtonClick}>Edit</button>
                 </div>
 
                 <div>
