@@ -130,6 +130,7 @@ export default class Main extends Component {
         this.onEditButtonClick = this.onEditButtonClick.bind(this);
         this.getUrl = this.getUrl.bind(this);
         this.editUrl = this.editUrl.bind(this);
+        this.deleteUrl = this.deleteUrl.bind(this);
     }
 
     onLongUrlInputChange(evt) {
@@ -153,6 +154,12 @@ export default class Main extends Component {
         // document.getElementById("short_url").value = "";
 
         this.editUrl();
+    }
+
+    onDeleteButtonClick(short_url) {
+        console.log("press delete button")
+        console.log(short_url);
+        this.deleteUrl(short_url);
     }
 
     getUrl() {
@@ -232,6 +239,23 @@ export default class Main extends Component {
 
     }
 
+    deleteUrl(short_url) {
+        const curState = this;
+        console.log("cur state");
+        console.log(short_url);
+        Axios.delete(`http://localhost:3000/api/url/${short_url}`)
+        .then(function(response){
+            if (response.data !== "") { 
+                alert("Successfully deleted url");
+                curState.setState({
+                    long_url: "",
+                    short_url: "",
+                    toDashboard: false,
+                });
+            }
+        })
+    }
+
     editLongUrl(curState, long_url, short_url_input) {
         Axios.put(`http://localhost:3000/api/url/${short_url_input}?long_url=${long_url}`)
         .then(function(response) {
@@ -305,6 +329,7 @@ export default class Main extends Component {
                     <div><strong>The abbreviation: </strong>{short_url}</div>
                     <input type="url" id="long_url" onChange={this.onLongUrlInputChange}></input>
                     <button onClick={this.onEditButtonClick}>Edit</button>
+                    <button onClick={this.onDeleteButtonClick(short_url)}>Delete</button>
                 </div>
             );
         }
