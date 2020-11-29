@@ -120,7 +120,6 @@ export default class Main extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            toDashboard: false,
             long_url: "",
             short_url: "",
         };
@@ -143,11 +142,7 @@ export default class Main extends Component {
         this.setState({short_url: evt.target.value});
     }
 
-    onGetButtonClick() {
-        document.getElementById("long_url").value = "";
-        document.getElementById("short_url").value = "";
-        this.getUrl();
-    }
+    
 
     onEditButtonClick() {
         // document.getElementById("long_url").value = "";
@@ -162,68 +157,70 @@ export default class Main extends Component {
         this.deleteUrl(short_url);
     }
 
+ 
+
     getUrl() {
         const curState = this;
         const long_url = urlencode(this.state.long_url, 'gbk');
         console.log("long url");
         console.log(long_url);
-        var short_url_input = this.state.short_url;
-        if (short_url_input === "") {
-            short_url_input = uuidv4();
-        }
+        
+        var short_url = this.state.short_url;
+        if (short_url === "") {
+            short_url = uuidv4();
+        };
+        console.log(short_url);
 
-        Axios.get(`http://localhost:3000/api/url/long/${long_url}`)
+        Axios.get(`http://localhost:3000/api/url/${short_url}/search`)
             .then(function(response) {
-                console.log(response.data);
-                
-                if (response.data !== "") {    // Found long url in the db
-                    alert("Long Url exist in the database");
-
-                    document.getElementById("long_url_label").innerText = "Long URL: " + urlencode.decode(response.data.long_url, 'gbk');
-                    document.getElementById("short_url_label").innerText = "Short URL: " + response.data.short_url;
-
-                    this.setState({
-                        long_url: urlencode.decode(response.data.long_url, 'gbk'),
-                        short_url: response.data.short_url,
-                        toDashboard: true,
-                        
-                    });
+                console.log("response from backend");
+                console.log(response);
+                console.log("182...........................");
+                console.log(long_url, short_url);
+                if (response.data !== "") {    
+                    // Found short url in the db
+                    alert("This short url aleady exist in DB, please use another one!");
+                    return null;
 
                 } else {    
-                    // Not found long url in the db
-                    //search for short url in db
-                    Axios.get(`http://localhost:3000/api/url/${short_url_input}`)
-                    .then(function(response) {
-                        console.log(response.data);
+                    //did not find short url in db
+                    curState.postUrl(long_url, short_url);
+                    return true;
+                
+                    // postUrl(long_url, short_url_input) 
+                    // Axios.get(`http://localhost:3000/api/url/${short_url_input}`)
+                    // .then(function(response) {
+                    //     console.log(response.data);
 
-                        if (response.data !== "") {    
-                            // Found short url in the db
-                            alert("short Url exist in the database");
+                    //     if (response.data !== "") {    
+                    //         // Found short url in the db
+                    //         alert("short Url exist in the database");
 
-                            document.getElementById("long_url_label").innerText = "Long URL: " + urlencode.decode(response.data.long_url, 'gbk');
-                            document.getElementById("short_url_label").innerText = "Short URL: " + response.data.short_url;
+                    //         document.getElementById("long_url_label").innerText = "Long URL: " + urlencode.decode(response.data.long_url, 'gbk');
+                    //         document.getElementById("short_url_label").innerText = "Short URL: " + response.data.short_url;
 
-                            curState.setState({
-                                long_url: urlencode.decode(response.data.long_url, 'gbk'),
-                                short_url: "",
-                                toDashboard: true,
-                            });
+                    //         curState.setState({
+                    //             long_url: urlencode.decode(response.data.long_url, 'gbk'),
+                    //             short_url: "",
+                    //             toDashboard: true,
+                    //         });
                             
 
-                        }else{
-                            alert("No short version for this url, created one.");
+                    //     }else{
+                    //         alert("No short version for this url, created one.");
                             
-                            console.log("the input short_url is");
-                            console.log(short_url_input);
-                            curState.postUrl(long_url, short_url_input);
-                        }
-                    })
+                    //         console.log("the input short_url is");
+                    //         console.log(short_url_input);
+                    //         curState.postUrl(long_url, short_url_input);
+                    //     }
+                    // })
                     
                 }
             })
             .catch(function(error) {
                 console.log(error);
             });
+        
             
     }
     editUrl() {
@@ -288,14 +285,16 @@ export default class Main extends Component {
 
     postUrl(long_url, short_url) {
         const curState = this;
-        console.log("input short url is: ");
+        console.log("post url is: ");
         console.log(short_url);
+        console.log(long_url);
         let redirecturl = "";
         Axios.post('http://localhost:3000/api/url/', {
             long_url: long_url,
             short_url: short_url,
         })
         .then(function(response) {
+            alert("successfully compressed url");
             console.log(response.data.long_url);
             console.log(response.data.short_url);
             redirecturl = urlencode.decode(response.data.long_url, 'gbk');
@@ -305,17 +304,20 @@ export default class Main extends Component {
         })
         .catch(function(error) {
             console.log(error);
+            alert("error in compressing url");
         })
         .then(function() {
             curState.setState({
-                long_url: redirecturl,
-                short_url: short_url,
-                toDashboard: true,
+                long_url: "",
+                short_url: "",
             });
-            console.log("reset long url to decoded one");
-            console.log(long_url);
-            console.log(short_url);
         });
+    }
+
+    onGetButtonClick() {
+        document.getElementById("long_url").value = "";
+        document.getElementById("short_url").value = "";
+        this.getUrl();
     }
 
     render() {
