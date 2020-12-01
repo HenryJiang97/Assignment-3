@@ -1,18 +1,22 @@
 import React, {Component} from 'react';
 import Axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
+const prefix = "http://localhost:3000/api/url/";
+
+var urlencode = require('urlencode');
 
 export default class Main extends Component {
     constructor(props) {
         super(props);
         this.state = {
             long_url: "",
-            short_url: ""
+            short_url: "",
         };
         this.onLongUrlInputChange = this.onLongUrlInputChange.bind(this);
         this.onShortUrlInputChange = this.onShortUrlInputChange.bind(this);
         this.onGetButtonClick = this.onGetButtonClick.bind(this);
         this.getUrl = this.getUrl.bind(this);
+        this.resetState = this.resetState.bind(this);
     }
 
     onLongUrlInputChange(evt) {
@@ -23,69 +27,81 @@ export default class Main extends Component {
         this.setState({short_url: evt.target.value});
     }
 
+    resetState() {
+        this.setState({
+            long_url: "",
+            short_url: "",
+        });
+    }
+
     onGetButtonClick() {
         document.getElementById("long_url").value = "";
         document.getElementById("short_url").value = "";
         this.getUrl();
     }
 
+    validateUrl(long_url){
+        Axios.get(this.state.long_url)
+            .then(function(response) {
+                return 1;
+            })
+            .catch(function(error) {
+                alert("the long url provided is not valid/ can not be visited");
+                console.log(error);
+                return 0;
+            });
+    }
+
     getUrl() {
         const that = this;
-        const long_url = this.state.long_url;
-        let short_url = this.state.short_url;
+        const long_url = urlencode(this.state.long_url, 'gbk');
+        console.log("Get Url Long Url: ", long_url);
+        
+        var short_url = this.state.short_url;
+        if (short_url === "") {
+            short_url = uuidv4();
+        };
+        console.log("Get Url Short Url: ", short_url);
 
-        Axios.get(`http://localhost:3000/api/url/${long_url}`)
+        if(this.validateUrl(this.state.long_url) === 1){
+            Axios.get(`${prefix}${short_url}/search`)
             .then(function(response) {
-                console.log(response.data);
-
-                if (response.data !== "") {    // Found url in the db
-                    alert("Url exist in the database");
-
-                    document.getElementById("long_url_label").innerText = "Long URL: " + response.data.long_url;
-                    document.getElementById("short_url_label").innerText = "Short URL: " + response.data.short_url;
-
-                } else {    // Not found url in the db
-                    alert("No short version for this url, created one.");
-                    if (short_url === "") {
-                        short_url = uuidv4();
-                    }
+                if (response.data !== "") {    
+                    // Found short url in the db
+                    alert("This short url aleady exist in DB, please use another one!");
+                    document.getElementById("long_url_label").innerText = "Long URL: " + urlencode.decode(response.data.long_url, 'gbk');
+                    document.getElementById("short_url_label").innerText = "Short URL: " + prefix + response.data.short_url;
+                    that.resetState();
+                } else {    
+                    // Did not find short url in db
                     that.postUrl(long_url, short_url);
                 }
             })
             .catch(function(error) {
                 console.log(error);
-            })
-            .then(function() {
-                that.setState({
-                    long_url: "",
-                    short_url: ""
-                });
             });
+        }
     }
 
     postUrl(long_url, short_url) {
         const that = this;
-
-        Axios.post('http://localhost:3000/api/url', {
+        Axios.post(prefix, {
             long_url: long_url,
-            short_url: short_url
+            short_url: short_url,
         })
         .then(function(response) {
-            console.log(response.data);
-
-            document.getElementById("long_url_label").innerText = "Long URL: " + response.data[0].long_url;
-            document.getElementById("short_url_label").innerText = "Short URL: " + response.data[0].short_url;
+            alert("successfully compressed url");
+            document.getElementById("long_url_label").innerText = "Long URL: " + urlencode.decode(response.data.long_url, 'gbk');
+            document.getElementById("short_url_label").innerText = "Short URL: " + prefix + response.data.short_url;
         })
         .catch(function(error) {
             console.log(error);
         })
         .then(function() {
-            that.setState({
-                long_url: "",
-                short_url: ""
-            });
+            that.resetState();
         });
     }
+
 
     render() {
         return (
@@ -103,7 +119,7 @@ export default class Main extends Component {
                 </div>
 
                 <div>
-                    <button onClick={this.onGetButtonClick}>PROCESS</button>
+                    <button onClick={this.onGetButtonClick}>GET</button>
                 </div>
 
                 <div>
