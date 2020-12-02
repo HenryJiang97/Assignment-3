@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import Axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
-const prefix = "http://localhost:3000/api/url/";
+const prefix = "https://cs5620-assignment3-backend.herokuapp.com/api/url/";
 
 var urlencode = require('urlencode');
 
@@ -40,6 +40,15 @@ export default class Main extends Component {
         this.getUrl();
     }
 
+    validURL(str) {
+        var pattern = new RegExp('^(https?:\\/\\/)?'+ // protocol
+            '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.?)+[a-z]{2,}|'+ // domain name
+            '((\\d{1,3}\\.){3}\\d{1,3}))'+ // ip (v4) address
+            '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*'+ //port
+            '(\\?[;&amp;a-z\\d%_.~+=-]*)?'+ // query string
+            '(\\#[-a-z\\d_]*)?$','i');
+            return pattern.test(str);
+    }
 
     getUrl() {
         const that = this;
@@ -52,11 +61,14 @@ export default class Main extends Component {
         };
         console.log("Get Url Short Url: ", short_url);
 
-        Axios.get(`${prefix}${short_url}/search`)
+        if (this.validURL(this.state.long_url)) {
+            Axios.get(`${prefix}${short_url}/search`)
             .then(function(response) {
                 if (response.data !== "") {    
                     // Found short url in the db
                     alert("This short url aleady exist in DB, please use another one!");
+                    document.getElementById("long_url_label").innerText = "Long URL: " + urlencode.decode(response.data.long_url, 'gbk');
+                    document.getElementById("short_url_label").innerText = "Short URL: " + prefix + response.data.short_url;
                     that.resetState();
                 } else {    
                     // Did not find short url in db
@@ -66,6 +78,9 @@ export default class Main extends Component {
             .catch(function(error) {
                 console.log(error);
             });
+        } else {
+            alert("Invalid URL input");
+        }
     }
 
     postUrl(long_url, short_url) {
